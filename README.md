@@ -23,7 +23,7 @@
 
 ## Requirements  
 
-- A laptop (Windows/Mac/Linux) with SuperCollider installed → [Download here](https://supercollider.github.io/download)  
+- A laptop (Windows/Mac/Linux) with SuperCollider installed → [Download here](https://supercollider.github.io/downloads)  
 - Headphones  
 
 ---
