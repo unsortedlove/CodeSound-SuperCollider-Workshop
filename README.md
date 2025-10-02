@@ -6,11 +6,7 @@
 
 ## Overview  
 
-**CodeSound** is an introduction to sound synthesis and algorithmic composition using [SuperCollider](https://supercollider.github.io/), a powerful open-source programming language for real-time audio synthesis and algorithmic music.  
- 
-Participants will learn the basics of SuperCollider’s language, synthesis engine, and pattern system. Through live coding exercises and creative experimentation, the workshop will explore how to generate, shape, and control sound structures in real-time. Sessions will also touch on approaches to improvisation, rhythmic systems, and working with randomness and repetition.  
-
-By the end of the workshop, participants will have the tools to start building their own sonic environments, instruments, and generative compositions.  
+**CodeSound** is an introduction to sound synthesis and live coding using SuperCollider, a cross-platform environment for audio synthesis and algorithmic composition, widely used by musicians, artists, and researchers working with sound. 
 
 ---
 
