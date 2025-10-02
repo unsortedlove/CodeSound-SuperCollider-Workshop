@@ -41,4 +41,4 @@
 
 In August, we hosted a 4-day introduction to sound synthesis and live coding with SuperCollider at Unsorted Space in Zurich. We explored the basics of synthesis, sound design, and live coding techniques in a hands-on format for beginners.  
 
-All workshop materials and examples are now available on GitHub — free to download, learn, and experiment with.  
+All workshop materials and examples are now available on GitHub.
