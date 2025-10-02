@@ -19,7 +19,7 @@ Topics Covered
 
 Requirements
 
--A laptop (Windows/Mac/Linux) with SuperCollider installed: Download here
+- A laptop (Windows/Mac/Linux) with SuperCollider installed: Download here
 - Headphones
 - Curiosity and openness to experiment with sound
 
