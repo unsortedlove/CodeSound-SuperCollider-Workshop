@@ -8,17 +8,21 @@
 ////////// 1. SuperCollider as Two Programs
 
 /*
-SuperCollider actually consists of TWO main parts:
+SuperCollider consists of three main components:
 
-1. sclang (the Language)
+1. scsynth — A real-time audio engine implemented as a server.
+   - Real-time audio synthesis engine
+   - Communicates via OSC (Open Sound Control) over UDP/TCP (User Datagram Protocol/Transmission Control Protocol)
+   - Plays and processes ALL audio
+
+1. sclang — A text-based programming language and interpreter that acts as a client to the server.
    - Object-oriented programming language
    - Class library
    - Interpreter that runs your code
 
-2. scsynth (the Server)
-   - Real-time audio synthesis engine
-   - Communicates via OSC (Open Sound Control) over UDP/TCP (User Datagram Protocol/Transmission Control Protocol)
-   - Plays and processes ALL audio
+3. ScIDE — A dedicated editor for SuperCollider with an integrated help system.
+   - SuperCollider Integrated Development Environment (IDE)
+
 
 ⚡ Important:
 - The language (client) sends OSC messages to the server.
