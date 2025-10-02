@@ -10,17 +10,25 @@ By the end of the workshop, participants will have the tools to start building t
 
 Topics Covered
 
-Introduction to SuperCollider language and IDE
-Synth definitions and real-time sound synthesis
-Working with patterns and Pbind
-Control structures, randomness, and scheduling
-Live coding and performance techniques
-Listening strategies and improvisation
+- Introduction to SuperCollider language and IDE
+- Synth definitions and real-time sound synthesis
+- Working with patterns and Pbind
+- Control structures, randomness, and scheduling
+- Live coding and performance techniques
+- Listening strategies and improvisation
+
 Requirements
 
-A laptop (Windows/Mac/Linux) with SuperCollider installed: Download here
-Headphones
-Curiosity and openness to experiment with sound
+-A laptop (Windows/Mac/Linux) with SuperCollider installed: Download here
+- Headphones
+- Curiosity and openness to experiment with sound
+
+
+16.–17. & 23.–24.08.2025
+CodeSound: SuperCollider Workshop [Workshop]
+10:00 – 15:00
+Unsorted Space
+Zurich, CH
 
 In August, we hosted a 4-day introduction to sound synthesis and live coding with SuperCollider at Unsorted Space in Zurich.
 We explored the basics of synthesis, sound design, and live coding techniques in a hands-on format for beginners.
