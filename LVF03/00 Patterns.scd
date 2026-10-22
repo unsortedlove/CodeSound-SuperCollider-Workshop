@@ -11,7 +11,7 @@
 // Evaluate this first. The SynthDef makes a short, clean sine tone for each
 // event. Patterns below will provide its frequency, amplitude, and duration.
 (
-SynthDef(\workshopSine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
+SynthDef(\sine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 	var envelope = EnvGen.kr(
 		Env.perc(0.01, sustain),
 		doneAction: 2
@@ -26,11 +26,11 @@ SynthDef(\workshopSine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 // 2. Play one repeating note
 //
 // Pbind turns key/value pairs into a stream of events. Here, every event uses
-// the workshopSine instrument, plays A4 (440 Hz), and starts half a second later.
+// the sine instrument, plays A4 (440 Hz), and starts half a second later.
 // Assigning the player to ~pattern lets you stop it in the next section.
 (
 ~pattern = Pbind(
-	\instrument, \workshopSine,
+	\instrument, \sine,
 	\freq, 440,
 	\dur, 0.5,
 	\amp, 0.15
@@ -50,7 +50,7 @@ SynthDef(\workshopSine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 // the whole list; inf means keep playing until stopped.
 (
 ~pattern = Pbind(
-	\instrument, \workshopSine,
+	\instrument, \sine,
 	\freq, Pseq([220, 330, 440, 330], inf),
 	\dur, 0.4,
 	\amp, 0.15
@@ -64,7 +64,7 @@ SynthDef(\workshopSine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 // changes in pitch and rhythm combine into a repeating phrase.
 (
 ~pattern = Pbind(
-	\instrument, \workshopSine,
+	\instrument, \sine,
 	\freq, Pseq([337, 347, 357, 440], inf),
 	\dur, Pseq([0.1, 0.25, 0.33, 0.1, 0.05, 0.05, 0.2], inf),
 	\amp, 0.15
@@ -78,7 +78,7 @@ SynthDef(\workshopSine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 // is the number of choices to make; inf continues indefinitely.
 (
 ~pattern = Pbind(
-	\instrument, \workshopSine,
+	\instrument, \sine,
 	\freq, Prand([220, 247, 294, 330, 392, 440], inf),
 	\dur, Pseq([0.2, 0.2, 0.4], inf),
 	\amp, 0.15
@@ -92,7 +92,7 @@ SynthDef(\workshopSine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 // Legato changes the event's sounding length relative to its duration.
 (
 ~pattern = Pbind(
-	\instrument, \workshopSine,
+	\instrument, \sine,
 	\freq, Pseq([220, 220, 218, 216, 330, 165], inf),
 	\dur, Pseq([0.1, 0.25, 0.33, 0.1, 0.05, 0.05], inf),
 	\amp, Pseq([0.1, 0.3, 0.2, 0.3, 0.18, 0.12], inf),
@@ -107,7 +107,7 @@ SynthDef(\workshopSine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 // chooses a new frequency for every event. trace posts event values to Post.
 (
 ~pattern = Pbind(
-	\instrument, \workshopSine,
+	\instrument, \sine,
 	\freq, Pwhite(220, 660, inf),
 	\dur, Prand([0.15, 0.25, 0.3], inf),
 	\amp, 0.15,
@@ -122,7 +122,7 @@ SynthDef(\workshopSine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 // plays 32 events.
 (
 ~pattern = Pbind(
-	\instrument, \workshopSine,
+	\instrument, \sine,
 	\freq, Pseq([261.63, 293.66, 311.13, 349.23, 392, 415.3, 466.16, 523.25], 4),
 	\dur, 0.15,
 	\amp, 0.15
@@ -133,7 +133,7 @@ SynthDef(\workshopSine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 // example makes 32 choices, and may choose the same frequency consecutively.
 (
 ~pattern = Pbind(
-	\instrument, \workshopSine,
+	\instrument, \sine,
 	\freq, Prand([261.63, 293.66, 311.13, 349.23, 392, 415.3, 466.16, 523.25], 32),
 	\dur, 0.15,
 	\amp, 0.15
@@ -144,7 +144,7 @@ SynthDef(\workshopSine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 // This example plays 11 events.
 (
 ~pattern = Pbind(
-	\instrument, \workshopSine,
+	\instrument, \sine,
 	\freq, Pser([261.63, 293.66, 311.13, 349.23, 392, 415.3, 466.16, 523.25], 11),
 	\dur, 0.15,
 	\amp, 0.15
@@ -157,7 +157,7 @@ SynthDef(\workshopSine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 // Pxrand chooses randomly, but avoids choosing the same list item twice in a row.
 (
 ~pattern = Pbind(
-	\instrument, \workshopSine,
+	\instrument, \sine,
 	\freq, Pxrand([220, 247, 294, 330, 392, 440], inf),
 	\dur, 0.2,
 	\amp, 0.15
@@ -167,7 +167,7 @@ SynthDef(\workshopSine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 // Pshuf shuffles the list, then plays the shuffled order for each repetition.
 (
 ~pattern = Pbind(
-	\instrument, \workshopSine,
+	\instrument, \sine,
 	\freq, Pshuf([220, 247, 294, 330, 392, 440], 4),
 	\dur, 0.2,
 	\amp, 0.15
@@ -178,7 +178,7 @@ SynthDef(\workshopSine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 // the list, number of repeats, section length, and step size.
 (
 ~pattern = Pbind(
-	\instrument, \workshopSine,
+	\instrument, \sine,
 	\freq, Pslide([220, 247, 294, 330, 392, 440], inf, 3, 1),
 	\dur, 0.2,
 	\amp, 0.15
@@ -189,7 +189,7 @@ SynthDef(\workshopSine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 // event, and play 12 events.
 (
 ~pattern = Pbind(
-	\instrument, \workshopSine,
+	\instrument, \sine,
 	\freq, Pseries(220, 30, 12),
 	\dur, 0.15,
 	\amp, 0.15
