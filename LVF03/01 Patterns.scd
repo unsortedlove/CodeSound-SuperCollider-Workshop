@@ -15,6 +15,15 @@
 // and so on. Unlike MIDI note numbers, degrees are not semitone steps:
 // the scale determines the distance between each degree.
 //
+// C major degree map:
+//
+// Degree:              0    1    2    3    4    5    6    7
+// Note:                C    D    E    F    G    A    B    C
+// Semitones from C:    0    2    4    5    7    9   11   12
+//
+// Each degree moves to the next note in the scale. The semitone distances
+// between degrees are not all equal; degree 7 reaches C in the next octave.
+//
 // \scale and \root make the pitch mapping explicit. A root of 0 means C;
 // changing it transposes the scale. \dur is measured in beats.
 (
