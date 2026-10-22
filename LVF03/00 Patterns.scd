@@ -10,6 +10,8 @@
 //
 // Evaluate this first. The SynthDef makes a short, clean sine tone for each
 // event. Patterns below will provide its frequency, amplitude, and duration.
+
+// 01 Sine Synth
 (
 SynthDef(\sine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 	var envelope = EnvGen.kr(
@@ -21,19 +23,40 @@ SynthDef(\sine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 	Out.ar(out, signal ! 2);
 }).add;
 )
+// 01 Modulated Sine
+(
+SynthDef(\sine, {
+	arg freq=440, amp=0.2, atk=1, rel=2, pan=0, mod=2;
+	var env, sig;
+
+	// Percussive envelope
+	env = EnvGen.kr(Env.perc(atk, rel), doneAction:2);
+
+	// Feedback oscillator with modulation
+	sig = SinOscFB.ar(freq, 0.9) * SinOsc.ar(mod) * env * amp;
+
+	// Stereo output
+	sig = Pan2.ar(sig, pan);
+	Out.ar(0, sig);
+}).add;
+)
 
 
 // 2. Play one repeating note
 //
 // Pbind turns key/value pairs into a stream of events. Here, every event uses
-// the sine instrument, plays A4 (440 Hz), and starts half a second later.
+// the sine instrument and plays A4 (440 Hz).
+//
+// \dur is measured in beats, not milliseconds. With the default TempoClock
+// (60 BPM), 1 beat is 1 second, so 0.5 beats gives an interval of 0.5 seconds.
+// At another tempo, the interval in seconds is: dur * 60 / BPM.
 // Assigning the player to ~pattern lets you stop it in the next section.
 (
 ~pattern = Pbind(
 	\instrument, \sine,
 	\freq, 440,
-	\dur, 0.5,
-	\amp, 0.15
+	\dur, 0.5, // Half a beat between events (0.5 seconds at 60 BPM).
+	\amp, 0.1
 ).play;
 )
 
@@ -96,7 +119,7 @@ SynthDef(\sine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 	\freq, Pseq([220, 220, 218, 216, 330, 165], inf),
 	\dur, Pseq([0.1, 0.25, 0.33, 0.1, 0.05, 0.05], inf),
 	\amp, Pseq([0.1, 0.3, 0.2, 0.3, 0.18, 0.12], inf),
-	\legato, Pseq([0.4, 0.4, 0.4, 0.4, 0.4, 0.9], inf)
+	\legato, Pseq([0.4, 0.4, 0.4, 0.4, 0.4, .9], inf)
 ).play;
 )
 
@@ -171,18 +194,32 @@ SynthDef(\sine, { |out = 0, freq = 440, amp = 0.15, sustain = 0.2|
 	\freq, Pshuf([220, 247, 294, 330, 392, 440], 4),
 	\dur, 0.2,
 	\amp, 0.15
-).play;
+).trace.play;
 )
 
-// Pslide moves through overlapping sections of the list. Its arguments are
-// the list, number of repeats, section length, and step size.
+// Pslide creates a short sequence from the list, then moves its starting
+// position and creates another sequence that overlaps the first one.
+//
+// Its arguments here are: list, repeats, length, start, step.
+// - repeats = inf: keep cycling through the possible starting positions.
+// - length = 3: output three frequencies in each sliding section.
+// - start = 1: begin at index 1 (the second item, 247 Hz; indexes start at 0).
+// - step is omitted, so it defaults to 1: move the starting index forward
+//   by one item each time.
+//
+// The first sections are [247, 294, 330], then [294, 330, 392], then
+// [330, 392, 440]. At the end of the list, Pslide wraps around by default,
+// so a later section is [392, 440, 220].
+//
+// Pbind plays each resulting frequency as an event. \dur is 0.2 beats between
+// events, \amp sets their amplitude, and .trace posts event values to Post.
 (
 ~pattern = Pbind(
 	\instrument, \sine,
 	\freq, Pslide([220, 247, 294, 330, 392, 440], inf, 3, 1),
 	\dur, 0.2,
 	\amp, 0.15
-).play;
+).trace.play;
 )
 
 // Pseries generates an arithmetic series: start at 220 Hz, add 30 Hz each
