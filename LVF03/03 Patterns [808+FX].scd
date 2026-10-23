@@ -280,9 +280,8 @@ Pbindef(
 	\amp, 0.75,
 	\pan, 0,
 	\out, 0,
-	\rsend, 0,
 	\dur, 0.5 * Pbjorklund2(Pwhite(9,15),16, inf),
-).play.(t, quant:4);
+).play(quant:4);
 
 Pbindef(
 	\sn,
@@ -294,7 +293,7 @@ Pbindef(
 	\pan, 0,
 	\out, 0,
 	\dur, 1 * Pbjorklund2(Pwhite(7,11),16, inf),
-).play.(t, quant:4);
+).play(quant:4);
 
 Pbindef(
 	\cb,
@@ -304,7 +303,7 @@ Pbindef(
 	\pan, 0,
 	\out, 0,
 	\dur, 4,
-).play.(t, quant:4);
+).play(quant:4);
 
 Pbindef(
 	\hh,
@@ -314,7 +313,7 @@ Pbindef(
 	\amp, 1,
 	\out, 0,
 	\dur, 1 * 0.25,
-).play.(t, quant:4);
+).play(quant:4);
 
 Pbindef(
 	\ohh,
@@ -324,7 +323,7 @@ Pbindef(
     \pan, 0,
 	\out, 0,
 	\dur, 3,
-).play.(t, quant:4);
+).play(quant:4);
 )
 
 ////////////////////// \stop
@@ -335,4 +334,3 @@ Pbindef(\cp).clear;
 Pbindef(\hh).clear;
 Pbindef(\ohh).clear;
 )
-
