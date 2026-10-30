@@ -1,33 +1,33 @@
-////////////////////// \system
+////////////////////// System
 ServerOptions.devices;
 
 (
 s = Server.local;
-ServerOptions.devices;
 s.options.outDevice_("Babyface Pro (72994168)");
-s.options.numOutputBusChannels_(12);
- s.options.inDevice_("Babyface Pro (72994168)");
-s.options.numInputBusChannels_(4);
-s.options.sampleRate_(48000);
+s.options.numOutputBusChannels_(16);
+s.options.inDevice_("Babyface Pro (72994168)");
+s.options.numInputBusChannels_(8);
+s.options.sampleRate_(96000);
 s.options.blockSize = 64;
 s.options.numBuffers = 1024 * 16;
 s.options.memSize = 8192 * 128;
-s.scope;
-s.meter;
+s.newBusAllocators;
+~fxBus = Bus.audio(s, 2);
 s.freeAll;
 s.waitForBoot({
 })
 )
 
-////////////////////// \clock
+////////////////////// Clock
 t = Task({ inf.do({ Tempo.bpm = 44 + 140.rand; 0.1.wait; });});
 t = Task({ inf.do({ Tempo.bpm = 40 + 40.rand; 0.1.wait; });});
-
 t.start;
-t.stop; Tempo.bpm = 142;
-t.stop; Tempo.bpm = 60;
+t.stop; Tempo.bpm = 150;
 
-////////////////////// \808
+////////////////////// Bus
+~fxBus = Bus.audio(s, 2);
+
+////////////////////// 808+
 (
 SynthDef.new(\bd808, {
 	var fenv, env, trienv, sig, sub, punch, pfenv;
@@ -142,7 +142,7 @@ SynthDef.new(\rimshot808, {
 	var fenv, env, sig, punch, tri1, tri2;
 	env = EnvGen.kr(Env.new([1, 1, 0], [0.00272, 0.07], -42), doneAction:2);
 	tri1 = LFTri.ar(1667 * 1.1, 1) * env;
-	tri2 = LFPulse.ar(455 * 1.1, width:0.8) * env;
+	tri2 = LFPulse.ar(\freq.kr(455).midicps * 1.1, width:0.8) * env;
 	punch = WhiteNoise.ar * env * 0.46;
 	sig = tri1 + tri2 + punch;
 	sig = BPeakEQ.ar(sig, 464, 0.44, 8);
@@ -194,15 +194,15 @@ SynthDef.new(\hat808, {
 	osc5 = LFPulse.ar(811.16);
 	osc6 = LFPulse.ar(538.75);
 	sighi = (osc1 + osc2 + osc3 + osc4 + osc5 + osc6);
-    siglow = (osc1 + osc2 + osc3 + osc4 + osc5 + osc6);
-    sighi = BPF.ar(sighi, 8900, 1);
-    sighi = HPF.ar(sighi, 9000);
-    siglow = BBandPass.ar(siglow, 8900, 0.8);
-    siglow = BHiPass.ar(siglow, 9000, 0.3);
-    sig = BPeakEQ.ar((siglow+sighi), 9700, 0.8, 0.7);
-    sig = sig * env * \amp.kr(1);
-    sig = Pan2.ar(sig, \pan.kr(0));
-    Out.ar(\out.kr(0), sig);
+	siglow = (osc1 + osc2 + osc3 + osc4 + osc5 + osc6);
+	sighi = BPF.ar(sighi, \freqC.kr(8900), 1);
+	sighi = HPF.ar(sighi, 9000);
+	siglow = BBandPass.ar(siglow, 8900, 0.8);
+	siglow = BHiPass.ar(siglow, 9000, 0.3);
+	sig = BPeakEQ.ar((siglow+sighi), 9700, 0.8, 0.7);
+	sig = sig * env * \amp.kr(1);
+	sig = Pan2.ar(sig, \pan.kr(0));
+	Out.ar(\out.kr(0), sig);
 }).add;
 
 SynthDef.new(\openhihat808, {
@@ -270,67 +270,120 @@ SynthDef.new(\cymbal808, {
 }).add;
 )
 
-////////////////////// \pattern #1
+////////////////////// Pattern
 (
 Pbindef(
 	\bd,
 	\instrument, \bd808,
-	\tone, 56,
+	\tone, Pif(Pwhite(0.0, 1.0, inf) < 0.985, 49, \r, inf),
 	\decay, 30,
-	\amp, 0.75,
-	\pan, 0,
-	\out, 0,
-	\dur, 0.5 * Pbjorklund2(Pwhite(9,15),16, inf),
-).play(quant:4);
+	\amp, Pseq([1.0, 0.78, 0.92, 0.8], inf) * Pwhite(0.88, 1.0, inf),
+	\dur, 1,
+).play.(t, quant:4);
 
 Pbindef(
 	\sn,
 	\instrument, \sn808,
-	\tone, 340,
-	\tone2, 189,
-	\snappy, 0.75,
-	\amp, 0.25,
-	\pan, 0,
-	\out, 0,
-	\dur, 1 * Pbjorklund2(Pwhite(7,11),16, inf),
-).play(quant:4);
-
-Pbindef(
-	\cb,
-	\instrument, \cymbal808,
-	\decay, 2,
-	\amp, 2,
-	\pan, 0,
-	\out, 0,
-	\dur, 4,
-).play(quant:4);
-
-Pbindef(
-	\hh,
-	\instrument, \hat808,
-	\decay, Prand([0.1, 0.5, 0.2, 0.15], inf),
-    \pan, 0,
-	\amp, 1,
-	\out, 0,
-	\dur, 1 * 0.25,
-).play(quant:4);
+	\tone, Pseq([
+		\r,
+		Pif(Pwhite(0.0, 1.0, inf) < 0.9, 340, \r, inf),
+		\r,
+		Pif(Pwhite(0.0, 1.0, inf) < 0.84, 340, \r, inf),
+		\r,
+		Pif(Pwhite(0.0, 1.0, inf) < 0.92, 340, \r, inf),
+		\r,
+		Pif(Pwhite(0.0, 1.0, inf) < 0.86, 340, \r, inf)
+	], inf),
+	\tone2, Pseq([
+		\r,
+		Pif(Pwhite(0.0, 1.0, inf) < 0.9, 189, \r, inf),
+		\r,
+		Pif(Pwhite(0.0, 1.0, inf) < 0.84, 189, \r, inf),
+		\r,
+		Pif(Pwhite(0.0, 1.0, inf) < 0.92, 189, \r, inf),
+		\r,
+		Pif(Pwhite(0.0, 1.0, inf) < 0.86, 189, \r, inf)
+	], inf),
+	\snappy,  Pwhite(0.12, 0.38, inf),
+	\amp, Pseq([0.24, 0.68, 0.28, 0.62, 0.25, 0.72, 0.3, 0.66], inf) * Pwhite(0.82, 1.0, inf),
+	\dur, 0.5,
+).play.(t, quant:4);
 
 Pbindef(
 	\ohh,
 	\instrument, \openhihat808,
-    \decay, 0.5,
-    \amp, 1,
-    \pan, 0,
-	\out, 0,
-	\dur, 3,
-).play(quant:4);
+	\freqC, Pseq([
+		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
+		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 42, \r, inf),
+		\r,
+		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
+		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
+		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
+		Pif(Pwhite(0.0, 1.0, inf) < 0.88, 8900, \r, inf),
+		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
+		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
+		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
+		\r,
+		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
+		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
+		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
+		Pif(Pwhite(0.0, 1.0, inf) < 0.88, 8900, \r, inf),
+		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf)
+	], inf),
+	\decay, Pwhite(0.05, 0.1, inf),
+	\amp, Pseq([0.38, 0.28, 0.2, 0.3, 0.35, 0.26, 0.58, 0.32, 0.4, 0.3, 0.18, 0.28, 0.36, 0.26, 0.62, 0.3], inf) * Pwhite(0.82, 1.0, inf),
+	\dur, 0.25,
+).play.(t, quant:4);
+
+Pbindef(
+	\mt,
+	\instrument, \MT808,
+	\freq, Pseq([
+		\r, \r, \r, \r,
+		Pif(Pwhite(0.0, 1.0, inf) < 0.88, 120, \r, inf),
+		\r, \r,
+		Pif(Pwhite(0.0, 1.0, inf) < 0.84, 123, \r, inf),
+		\r, \r, \r, \r,
+		Pif(Pwhite(0.0, 1.0, inf) < 0.88, 120, \r, inf),
+		\r, \r,
+		Pif(Pwhite(0.0, 1.0, inf) < 0.84, 123, \r, inf)
+	], inf),
+	\decay, Pwhite(0.1, 0.24, inf),
+	\amp, Pseq([0.2, 0.2, 0.2, 0.2, 0.62, 0.2, 0.2, 0.38, 0.2, 0.2, 0.2, 0.2, 0.66, 0.2, 0.2, 0.42], inf) * Pwhite(0.82, 1.0, inf),
+	\dur, 0.25,
+).play.(t, quant:4);
+
+Pbindef(
+	\cb,
+	\instrument, \cowbell808,
+	\scale, Scale.phrygian,
+	\degree, Pif(PSVop_o([3, 0, 5, 2], \u) > 0, Pwrand2([0, -2, -5, -7, \r], [0.38, 0.24, 0.18, 0.1, 0.1], inf) + PSVsymdif_i([15, 7, 22]), \r, inf),
+	\octave, Pwrand2([1, 2, 3], [0.58, 0.34, 0.08], inf),
+	\root, 0,
+	\decay, Pwrand2([0.5, 0.45, 0.7], [0.5, 0.35, 0.15], inf),
+	\amp, Pwrand2([0.1, 0.2, 0.05], [0.5, 0.38, 0.12], inf) * Pwhite(0.82, 1.0, inf),
+	\dur, Pseq([0.25, 0.5, 0.75, 0.25, 0.5], inf),
+).play.(t, quant:4);
+
+Pbindef(
+	\rs,
+	\instrument, \rimshot808,
+	\scale, Scale.locrian,
+	\degree, Pif(PSVsymdif_i([15, 7, 22]) > 0, Pwrand2([-5, -2, 0, 3, 5, \r], [0.22, 0.28, 0.2, 0.12, 0.08, 0.1], inf) + PSVop_i([3, 5, 7], \u), \r, inf),
+	\octave, Pwrand2([1, 2, 3], [0.62, 0.3, 0.08], inf),
+	\root, 0,
+	\decay, Pwhite(0.52, 0.58, inf),
+	\amp, Pwrand2([0.5, 0.68, 0.58], [0.52, 0.36, 0.12], inf) * Pwhite(0.82, 1.0, inf),
+	\dur, Pseq([0.5, 0.25, 0.75, 0.5], inf),
+).play.(t, quant:4);
 )
 
-////////////////////// \stop
+////////////////////// Stop
 (
 Pbindef(\bd).clear;
 Pbindef(\sn).clear;
-Pbindef(\cp).clear;
-Pbindef(\hh).clear;
 Pbindef(\ohh).clear;
+Pbindef(\mt).clear;
+Pbindef(\cb).clear;
+Pbindef(\rs).clear;
 )
