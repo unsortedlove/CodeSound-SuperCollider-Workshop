@@ -1,4 +1,6 @@
 ////////////////////// System
+// Configure the audio server before booting it. Change the device names to match
+// your audio interface; the FX bus carries stereo effect sends.
 ServerOptions.devices;
 
 (
@@ -19,16 +21,18 @@ s.waitForBoot({
 )
 
 ////////////////////// Clock
+// TempoClock timing is in beats. Choose one tempo Task; the second assignment
+// replaces the first. Stop the Task and set Tempo.bpm directly for steady tempo.
 t = Task({ inf.do({ Tempo.bpm = 44 + 140.rand; 0.1.wait; });});
 t = Task({ inf.do({ Tempo.bpm = 40 + 40.rand; 0.1.wait; });});
 t.start;
 t.stop; Tempo.bpm = 150;
 
-////////////////////// Bus
-~fxBus = Bus.audio(s, 2);
-
 ////////////////////// 808+
+// SynthDefs describe the sounds that patterns trigger. Evaluate this block
+// after the server boots; most voices can send to the speakers and FX bus.
 (
+// Kick: a falling sine pitch envelope, low triangle layer, and short punch.
 SynthDef.new(\bd808, {
 	var fenv, env, trienv, sig, sub, punch, pfenv;
 	env = EnvGen.kr(Env.new([0.11, 1, 0], [0, \decay.kr(30)], -225),doneAction:2);
@@ -45,6 +49,7 @@ SynthDef.new(\bd808, {
 	Out.ar(\out.kr(0), sig);
 }).add;
 
+// Snare: filtered noise makes the snap; two short sine tones add body.
 SynthDef.new(\sn808, {
 	var noiseEnv, atkEnv, sig, noise, osc1, osc2, sum;
 	noiseEnv = EnvGen.kr(Env.perc(0.001, 4.2, 1, -115), doneAction:2);
@@ -58,9 +63,11 @@ SynthDef.new(\sn808, {
 	sum = (osc1+osc2) * atkEnv * \amp2.kr(1);
 	sig = Pan2.ar((noise + sum) * \amp.kr(2) * 2.5, \pan.kr(0));
 	sig = HPF.ar(sig, 340);
-	Out.ar(\out.kr(0), sig);
+	Out.ar(\out.kr(0), sig * \dry.kr(1));
+	Out.ar(\fx.kr(0), sig * \send.kr(0));
 }).add;
 
+// Raw clap: a bright noise attack followed by a longer filtered noise tail.
 SynthDef.new(\cpRaw808, {
 	var atkenv, atk, decay, sum, denv;
 	atkenv = EnvGen.kr(Env.new([0.5,1,0],[0, 0.3], -160), doneAction:2);
@@ -70,18 +77,24 @@ SynthDef.new(\cpRaw808, {
 	sum = atk + decay * \amp.kr(1);
 	sum = HPF.ar(sum, 500);
 	sum = BPF.ar(sum, 1062, 0.5);
-	Out.ar(\out.kr(0), Pan2.ar(sum * 1.5, \pan.kr(0)));
+	sum = Pan2.ar(sum * 1.5, \pan.kr(0));
+	Out.ar(\out.kr(0), sum * \dry.kr(1));
+	Out.ar(\fx.kr(0), sum * \send.kr(0));
 }).add;
 
+// Clap reverb texture: a filtered noise wash, intended as a separate layer.
 SynthDef.new(\cpReverb808, {
 	var reverb, revgen;
 	revgen = EnvGen.kr(Env.perc(0.1, 4, curve:-9), \gate.kr(1), doneAction:2);
 	reverb = WhiteNoise.ar * revgen * 0.02;
 	reverb = HPF.ar(reverb, 500);
 	reverb = LPF.ar(reverb, 1000);
-	Out.ar(\out.kr(0), Pan2.ar(reverb * \amp.kr(1), \pan.kr(0)));
+	reverb = Pan2.ar(reverb * \amp.kr(1), \pan.kr(0));
+	Out.ar(\out.kr(0), reverb * \dry.kr(1));
+	Out.ar(\fx.kr(0), reverb * \send.kr(0));
 }).add;
 
+// Low tom: a sine oscillator with a short downward pitch sweep.
 SynthDef.new(\LT808, {
 	var sig, fenv, env, pnoise, penv;
 	env = EnvGen.kr(Env.new([0.4, 1, 0], [0, 20], -250),doneAction:2);
@@ -89,27 +102,33 @@ SynthDef.new(\LT808, {
 	fenv = Env([\freq.kr(80)*1.25, \freq.kr(80)*1.125, \freq.kr(80)], [0.1, 0.5], -4).kr;
 	sig = SinOsc.ar(fenv, pi/2) * env;
 	sig = Pan2.ar(sig * \amp.kr(1) * 3, \pan.kr(0));
-	Out.ar(\out.kr(0), sig);
+	Out.ar(\out.kr(0), sig * \dry.kr(1));
+	Out.ar(\fx.kr(0), sig * \send.kr(0));
 }).add;
 
+// Mid tom: similar to the low tom, tuned higher.
 SynthDef.new(\MT808, {
 	var sig, fenv, env;
 	env = EnvGen.kr(Env.new([0.4, 1, 0], [0, 16], -250),doneAction:2);
 	fenv = Env([\freq.kr(120)*1.33333, \freq.kr(120)*1.125, \freq.kr(120)], [0.1, 0.5], -4).kr;
 	sig = SinOsc.ar(fenv, pi/2);
 	sig = Pan2.ar(sig * env * \amp.kr(1) * 2, \pan.kr(0));
-	Out.ar(\out.kr(0), sig);
+	Out.ar(\out.kr(0), sig * \dry.kr(1));
+	Out.ar(\fx.kr(0), sig * \send.kr(0));
 }).add;
 
+// High tom: the same pitched-tom idea in a higher register.
 SynthDef.new(\HT808, {
 	var sig, fenv, env;
 	env = EnvGen.kr(Env.new([0.4, 1, 0], [0, 11], -250),doneAction:2);
 	fenv = Env([\freq.kr(165)*1.333333, \freq.kr(165)*1.121212, \freq.kr(165)], [0.1, 0.5], -4).kr;
 	sig = SinOsc.ar(fenv, pi/2);
 	sig = Pan2.ar(sig * env * \amp.kr(1) * 2, \pan.kr(0));
-	Out.ar(\out.kr(0), sig);
+	Out.ar(\out.kr(0), sig * \dry.kr(1));
+	Out.ar(\fx.kr(0), sig * \send.kr(0));
 }).add;
 
+// Low conga: a resonant sine hit with a pitch sweep.
 SynthDef.new(\LC808, {
 	var sig, fenv, env, pnoise, penv;
 	env = EnvGen.kr(Env.new([0.15, 1, 0], [0, 18], -250),doneAction:2);
@@ -117,73 +136,93 @@ SynthDef.new(\LC808, {
 	fenv = Env([\freq.kr(165)*1.333333, \freq.kr(165)*1.121212, \freq.kr(165)], [0.1, 0.5], -4).kr;
 	sig = SinOsc.ar(fenv, pi/2) * env;
 	sig = Pan2.ar(sig * \amp.kr(1) * 3, \pan.kr(0));
-	Out.ar(\out.kr(0), sig);
+	Out.ar(\out.kr(0), sig * \dry.kr(1));
+	Out.ar(\fx.kr(0), sig * \send.kr(0));
 }).add;
 
+// Mid conga: a higher, shorter pitched conga voice.
 SynthDef.new(\MC808, {
 	var sig, fenv, env;
 	env = EnvGen.kr(Env.new([0.15, 1, 0], [0, 9], -250),doneAction:2);
 	fenv = Env([ \freq.kr(250)*1.24, \freq.kr(250)*1.12, \freq.kr(250)], [0.1, 0.5], -4).kr;
 	sig = SinOsc.ar(fenv, pi/2);
 	sig = Pan2.ar(sig * env * \amp.kr(1) * 2, \pan.kr(0));
-	Out.ar(\out.kr(0), sig);
+	Out.ar(\out.kr(0), sig * \dry.kr(1));
+	Out.ar(\fx.kr(0), sig * \send.kr(0));
 }).add;
 
+// High conga: the highest pitched conga voice.
 SynthDef.new(\HC808, {
 	var sig, fenv, env;
 	env = EnvGen.kr(Env.new([0.15, 1, 0], [0, 6], -250),doneAction:2);
 	fenv = Env([\freq.kr(370)*1.22972, \freq.kr(370)*1.08108, \freq.kr(370)], [0.1, 0.5], -4).kr;
 	sig = SinOsc.ar(fenv, pi/2);
 	sig = Pan2.ar(sig * env * \amp.kr(1) * 2, \pan.kr(0) );
-	Out.ar(\out.kr(0), sig);
+	Out.ar(\out.kr(0), sig * \dry.kr(1));
+	Out.ar(\fx.kr(0), sig * \send.kr(0));
 }).add;
 
+// Rimshot: tonal triangle/pulse components plus a short noise transient.
+// The \freq control follows melodic pattern pitches; \amp controls hit level.
 SynthDef.new(\rimshot808, {
-	var fenv, env, sig, punch, tri1, tri2;
+	var freq, tune, env, sig, punch, tri1, tri2;
+	freq = \freq.kr(455);
+	tune = freq / 455;
 	env = EnvGen.kr(Env.new([1, 1, 0], [0.00272, 0.07], -42), doneAction:2);
-	tri1 = LFTri.ar(1667 * 1.1, 1) * env;
-	tri2 = LFPulse.ar(\freq.kr(455).midicps * 1.1, width:0.8) * env;
+	tri1 = LFTri.ar(1667 * 1.1 * tune, 1) * env;
+	tri2 = LFPulse.ar(freq * 1.1, width:0.8) * env;
 	punch = WhiteNoise.ar * env * 0.46;
 	sig = tri1 + tri2 + punch;
 	sig = BPeakEQ.ar(sig, 464, 0.44, 8);
 	sig = HPF.ar(sig, 315);
 	sig = LPF.ar(sig, 7300);
 	sig = Pan2.ar(sig * \amp.kr(1), \pan.kr(0));
-	Out.ar(\out.kr(0), sig);
+	Out.ar(\out.kr(0), sig * \dry.kr(1));
+	Out.ar(\fx.kr(0), sig * \send.kr(0));
 }).add;
 
+// Claves: a short, bright sine click.
 SynthDef.new(\claves808, {
 	var  env, sig;
 	env = EnvGen.kr(Env.new([1, 1, 0], [0, 0.1], -20), doneAction:2);
 	sig = SinOsc.ar(2500, pi/2) * env * \amp.kr(1);
 	sig = Pan2.ar(sig, \pan.kr(0));
-	Out.ar(\out.kr(0), sig);
+	Out.ar(\out.kr(0), sig * \dry.kr(1));
+	Out.ar(\fx.kr(0), sig * \send.kr(0));
 }).add;
 
+// Maracas: a short burst of high-passed white noise.
 SynthDef.new(\maracas808, {
 	var env, sig;
 	env = EnvGen.kr(Env.new([0.3, 1, 0], [0.027, 0.07], -250), \gate.kr(1), doneAction:2);
 	sig = WhiteNoise.ar * env * \amp.kr(1);
 	sig = HPF.ar(sig, 5500);
 	sig = Pan2.ar(sig, \pan.kr(0));
-	Out.ar(\out.kr(0), sig);
+	Out.ar(\out.kr(0), sig * \dry.kr(1));
+	Out.ar(\fx.kr(0), sig * \send.kr(0));
 }).add;
 
+// Cowbell: two related pulse oscillators make the classic metallic 808 tone.
+// The \freq control follows melodic pattern pitches.
 SynthDef.new(\cowbell808, {
-	var sig, pul1, pul2, env, atk, atkenv, datk;
-	atkenv = EnvGen.kr(Env.perc(0, 1, 1, -215),doneAction:0);
-	env = EnvGen.kr(Env.perc(0.01, 9.5, 1, -90),doneAction:2);
-	pul1 = LFPulse.ar(811.16);
-	pul2 = LFPulse.ar(538.75);
+	var freq, tune, sig, pul1, pul2, env, atk, atkenv, datk;
+	freq = \freq.kr(538.75);
+	tune = freq / 538.75;
+	atkenv = EnvGen.kr(Env.perc(0, 1, 1, -215), doneAction:0);
+	env = EnvGen.kr(Env.perc(0.01, 9.5, 1, -90), doneAction:2);
+	pul1 = LFPulse.ar(811.16 * tune);
+	pul2 = LFPulse.ar(538.75 * tune);
 	atk = (pul1 + pul2) * atkenv * 6;
 	datk = (pul1 + pul2) * env;
 	sig = (atk + datk) * \amp.kr(1);
 	sig = HPF.ar(sig, 250);
 	sig = LPF.ar(sig, 4500);
 	sig = Pan2.ar(sig, \pan.kr(0));
-	Out.ar(\out.kr(0), sig);
+	Out.ar(\out.kr(0), sig * \dry.kr(1));
+	Out.ar(\fx.kr(0), sig * \send.kr(0));
 }).add;
 
+// Closed hat: a set of pulse oscillators filtered into a short, bright noise.
 SynthDef.new(\hat808, {
 	var sig, sighi,siglow, sum, env, osc1, osc2, osc3, osc4, osc5, osc6;
 	env = EnvGen.kr(Env.perc(0.005, \decay.kr(0.42), 1, -30),doneAction:2);
@@ -202,9 +241,11 @@ SynthDef.new(\hat808, {
 	sig = BPeakEQ.ar((siglow+sighi), 9700, 0.8, 0.7);
 	sig = sig * env * \amp.kr(1);
 	sig = Pan2.ar(sig, \pan.kr(0));
-	Out.ar(\out.kr(0), sig);
+	Out.ar(\out.kr(0), sig * \dry.kr(1));
+	Out.ar(\fx.kr(0), sig * \send.kr(0));
 }).add;
 
+// Open hat: the same oscillator bank with a longer, two-part envelope.
 SynthDef.new(\openhihat808, {
 	var sig, siga, sigb, env1, env2, osc1, osc2, osc3, osc4, osc5, osc6, sum;
 	env1 = EnvGen.kr(Env.perc(0.1, \decay.kr(0.5), curve:-3), doneAction:2);
@@ -227,9 +268,11 @@ SynthDef.new(\openhihat808, {
 	sum = LPF.ar(sum, 4000);
 	sum = Pan2.ar(sum, \pan.kr(0));
 	sum = sum * \amp.kr(4) * 2;
-	Out.ar(\out.kr(0), sum);
+	Out.ar(\out.kr(0), sum * \dry.kr(1));
+	Out.ar(\fx.kr(0), sum * \send.kr(0));
 }).add;
 
+// Cymbal: layered filtered versions of the pulse bank with different envelopes.
 SynthDef.new(\cymbal808, {
 	var sig, sig1,sig2, sig2a, sig2b, sig3, env1, env2, env2b, env3, osc1, osc2, osc3, osc4, osc5, osc6, sum;
 	env1 = EnvGen.kr(Env.perc(0.3, \decay.kr(2), curve:-3), doneAction:2);
@@ -266,119 +309,152 @@ SynthDef.new(\cymbal808, {
 	sum = LPF.ar(sum, 4000);
 	sum = Pan2.ar(sum, \pan.kr(0));
 	sum = sum * \amp.kr(20);
-	Out.ar(\out.kr(0), sum);
+	Out.ar(\out.kr(0), sum * \dry.kr(1));
+	Out.ar(\fx.kr(0), sum * \send.kr(0));
 }).add;
+
+// FX control ranges used by the Ndef GUI for the send-bus comb filter.
+Ndef(\comb).addSpec(
+	\inAmp, [0, 1],
+	\wet, [0, 1],
+	\combTime, [0.001, 0.05],
+	\decayTime, [0.1, 8],
+	\rate, [0.01, 2],
+	\outAmp, [0, 1]
+);
+)
+
+////////////////////// Generative FX
+(
+// Read the stereo send bus and feed it through a modulated comb filter.
+// \combTime sets the resonant spacing; \decayTime controls its ringing tail.
+~fx.tryPerform(\free);
+Ndef(\comb, {
+	var src, combTime, modulation, filtered;
+	src = LeakDC.ar(In.ar(~fxBus.index, 2));
+	src = src * \inAmp.kr(1);
+	combTime = \combTime.kr(0.012);
+	modulation = SinOsc.kr(\rate.kr(0.13), [0, pi]).range(-0.001, 0.001);
+	filtered = CombC.ar(
+		src,
+		0.05,
+		(combTime + modulation).clip(0.001, 0.05),
+		\decayTime.kr(2).clip(0.1, 8)
+	);
+	LeakDC.ar(filtered) * \wet.kr(1) * \outAmp.kr(0.5);
+}).play;
 )
 
 ////////////////////// Pattern
 (
+// Four-on-the-floor drive anchors the groove; occasional kicks, shifting
+// accents, and short subdivisions add an IDM edge.
 Pbindef(
 	\bd,
 	\instrument, \bd808,
-	\tone, Pif(Pwhite(0.0, 1.0, inf) < 0.985, 49, \r, inf),
+	\type, Pseq([
+		\note, \rest, \rest, \rest, \note, \rest, \note, \rest,
+		\note, \rest, \rest, \note, \note, \rest, \rest, \note,
+		\note, \rest, \rest, \rest, \note, \rest, \rest, \note,
+		\note, \rest, \note, \rest, \note, \rest, \rest, \note
+	], inf),
+	\tone, Pseq([49, 49, 49, 49, 46, 49, 49, 49], inf),
 	\decay, 30,
-	\amp, Pseq([1.0, 0.78, 0.92, 0.8], inf) * Pwhite(0.88, 1.0, inf),
-	\dur, 1,
+	\amp, Pseq([1.0, 0.34, 0.28, 0.42, 0.82, 0.3, 0.58, 0.36], inf) * Pwhite(0.86, 1.0, inf),
+	\dur, 0.25,
 ).play.(t, quant:4);
 
+// A firm backbeat with occasional ghost hits and one-bar variations.
 Pbindef(
 	\sn,
 	\instrument, \sn808,
-	\tone, Pseq([
-		\r,
-		Pif(Pwhite(0.0, 1.0, inf) < 0.9, 340, \r, inf),
-		\r,
-		Pif(Pwhite(0.0, 1.0, inf) < 0.84, 340, \r, inf),
-		\r,
-		Pif(Pwhite(0.0, 1.0, inf) < 0.92, 340, \r, inf),
-		\r,
-		Pif(Pwhite(0.0, 1.0, inf) < 0.86, 340, \r, inf)
+	\type, Pseq([
+		\rest, \rest, \rest, \rest, \note, \rest, \note, \rest,
+		\rest, \rest, \rest, \rest, \note, \rest, \note, \rest,
+		\rest, \rest, \rest, \note, \note, \rest, \rest, \rest,
+		\rest, \rest, \rest, \rest, \note, \rest, \note, \rest
 	], inf),
-	\tone2, Pseq([
-		\r,
-		Pif(Pwhite(0.0, 1.0, inf) < 0.9, 189, \r, inf),
-		\r,
-		Pif(Pwhite(0.0, 1.0, inf) < 0.84, 189, \r, inf),
-		\r,
-		Pif(Pwhite(0.0, 1.0, inf) < 0.92, 189, \r, inf),
-		\r,
-		Pif(Pwhite(0.0, 1.0, inf) < 0.86, 189, \r, inf)
-	], inf),
-	\snappy,  Pwhite(0.12, 0.38, inf),
-	\amp, Pseq([0.24, 0.68, 0.28, 0.62, 0.25, 0.72, 0.3, 0.66], inf) * Pwhite(0.82, 1.0, inf),
-	\dur, 0.5,
-).play.(t, quant:4);
-
-Pbindef(
-	\ohh,
-	\instrument, \openhihat808,
-	\freqC, Pseq([
-		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
-		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 42, \r, inf),
-		\r,
-		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
-		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
-		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
-		Pif(Pwhite(0.0, 1.0, inf) < 0.88, 8900, \r, inf),
-		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
-		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
-		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
-		\r,
-		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
-		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
-		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf),
-		Pif(Pwhite(0.0, 1.0, inf) < 0.88, 8900, \r, inf),
-		Pif(Pwhite(0.0, 1.0, inf) < 0.74, 8900, \r, inf)
-	], inf),
-	\decay, Pwhite(0.05, 0.1, inf),
-	\amp, Pseq([0.38, 0.28, 0.2, 0.3, 0.35, 0.26, 0.58, 0.32, 0.4, 0.3, 0.18, 0.28, 0.36, 0.26, 0.62, 0.3], inf) * Pwhite(0.82, 1.0, inf),
+	\tone, 340,
+	\tone2, 189,
+	\snappy, 0.38,
+	\fx, ~fxBus,
+	\dry, Pwrand([1, 0], [0.78, 0.22], inf),
+	\send, Pwhite(0.25, 0.8, inf),
+	\amp, Pseq([0.32, 0.58, 0.26, 0.78, 0.32, 0.5, 0.24, 0.68], inf) * Pwhite(0.82, 1.0, inf),
 	\dur, 0.25,
 ).play.(t, quant:4);
 
+// Busy 16th hats provide techno momentum, with random gaps and shifting tone.
+Pbindef(
+	\ohh,
+	\instrument, \hat808,
+	\type, Pwrand([\note, \rest], [0.82, 0.18], inf),
+	\freqC, Pseq([8900, 8900, 7200, 6400, 8900, 8100, 6700, 8900], inf),
+	\decay, Pwhite(0.08, 0.2, inf),
+	\fx, ~fxBus,
+	\dry, Pwrand([1, 0], [0.72, 0.28], inf),
+	\send, Pwhite(0.2, 0.9, inf),
+	\amp, Pseq([0.52, 0.22, 0.34, 0.18, 0.46, 0.24, 0.58, 0.2], inf) * Pwhite(0.72, 1.0, inf),
+	\dur, 0.25,
+).play.(t, quant:4);
+
+// Pitched percussion adds syncopated fills without losing the steady pulse.
 Pbindef(
 	\mt,
 	\instrument, \MT808,
-	\freq, Pseq([
-		\r, \r, \r, \r,
-		Pif(Pwhite(0.0, 1.0, inf) < 0.88, 120, \r, inf),
-		\r, \r,
-		Pif(Pwhite(0.0, 1.0, inf) < 0.84, 123, \r, inf),
-		\r, \r, \r, \r,
-		Pif(Pwhite(0.0, 1.0, inf) < 0.88, 120, \r, inf),
-		\r, \r,
-		Pif(Pwhite(0.0, 1.0, inf) < 0.84, 123, \r, inf)
+	\type, Pseq([
+		\rest, \rest, \rest, \rest, \note, \rest, \rest, \note,
+		\rest, \rest, \note, \rest, \rest, \rest, \note, \rest
 	], inf),
-	\decay, Pwhite(0.1, 0.24, inf),
-	\amp, Pseq([0.2, 0.2, 0.2, 0.2, 0.62, 0.2, 0.2, 0.38, 0.2, 0.2, 0.2, 0.2, 0.66, 0.2, 0.2, 0.42], inf) * Pwhite(0.82, 1.0, inf),
+	\freq, Pseq([120, 145, 120, 173, 120, 157, 110, 165], inf),
+	\fx, ~fxBus,
+	\dry, Pwrand([1, 0], [0.76, 0.24], inf),
+	\send, Pwhite(0.2, 0.75, inf),
+	\amp, Pseq([0.3, 0.2, 0.62, 0.24, 0.34, 0.2, 0.52, 0.2], inf) * Pwhite(0.8, 1.0, inf),
 	\dur, 0.25,
 ).play.(t, quant:4);
 
+// A short minor-mode motif punctuates the drums like a dark techno hook.
 Pbindef(
 	\cb,
 	\instrument, \cowbell808,
 	\scale, Scale.phrygian,
-	\degree, Pif(PSVop_o([3, 0, 5, 2], \u) > 0, Pwrand2([0, -2, -5, -7, \r], [0.38, 0.24, 0.18, 0.1, 0.1], inf) + PSVsymdif_i([15, 7, 22]), \r, inf),
-	\octave, Pwrand2([1, 2, 3], [0.58, 0.34, 0.08], inf),
+	\type, Pwrand([\note, \rest], [0.34, 0.66], inf),
+	\degree, Pseq([0, -2, 3, -2, 0, -5, 3, -2], inf),
+	\octave, Pseq([3, 3, 4, 3, 3, 4, 3, 2], inf),
 	\root, 0,
-	\decay, Pwrand2([0.5, 0.45, 0.7], [0.5, 0.35, 0.15], inf),
-	\amp, Pwrand2([0.1, 0.2, 0.05], [0.5, 0.38, 0.12], inf) * Pwhite(0.82, 1.0, inf),
-	\dur, Pseq([0.25, 0.5, 0.75, 0.25, 0.5], inf),
+	\fx, ~fxBus,
+	\dry, Pwrand([1, 0], [0.68, 0.32], inf),
+	\send, Pwhite(0.25, 0.95, inf),
+	\decay, Pwhite(0.25, 0.75, inf),
+	\amp, Pwhite(0.08, 0.22, inf),
+	\dur, 0.25,
 ).play.(t, quant:4);
 
+// Rimshots add metallic, displaced accents and occasional quick fills.
 Pbindef(
 	\rs,
 	\instrument, \rimshot808,
 	\scale, Scale.locrian,
-	\degree, Pif(PSVsymdif_i([15, 7, 22]) > 0, Pwrand2([-5, -2, 0, 3, 5, \r], [0.22, 0.28, 0.2, 0.12, 0.08, 0.1], inf) + PSVop_i([3, 5, 7], \u), \r, inf),
-	\octave, Pwrand2([1, 2, 3], [0.62, 0.3, 0.08], inf),
+	\type, Pseq([
+		\rest, \note, \rest, \rest, \rest, \note, \rest, \note,
+		\rest, \rest, \note, \rest, \note, \rest, \rest, \note
+	], inf),
+	\degree, Pseq([-5, -2, 0, 3, 5, -7, 2], inf),
+	\octave, Pseq([3, 4, 3, 4, 2, 3, 5], inf),
 	\root, 0,
-	\decay, Pwhite(0.52, 0.58, inf),
-	\amp, Pwrand2([0.5, 0.68, 0.58], [0.52, 0.36, 0.12], inf) * Pwhite(0.82, 1.0, inf),
-	\dur, Pseq([0.5, 0.25, 0.75, 0.5], inf),
+	\fx, ~fxBus,
+	\dry, Pwrand([1, 0], [0.7, 0.3], inf),
+	\send, Pwhite(0.2, 0.85, inf),
+	\decay, Pwhite(0.42, 0.62, inf),
+	\amp, Pwhite(0.32, 0.72, inf),
+	\dur, 0.25,
 ).play.(t, quant:4);
 )
 
 ////////////////////// Stop
+// Evaluate to stop and clear the active patterns. The FX Ndef can be stopped
+// separately with Ndef(\comb).stop.
 (
 Pbindef(\bd).clear;
 Pbindef(\sn).clear;
@@ -387,3 +463,6 @@ Pbindef(\mt).clear;
 Pbindef(\cb).clear;
 Pbindef(\rs).clear;
 )
+
+// Open the Ndef control panel to adjust the comb filter while the patterns play.
+Ndef(\comb).gui;
