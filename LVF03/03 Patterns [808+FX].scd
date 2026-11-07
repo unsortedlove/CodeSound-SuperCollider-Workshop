@@ -393,7 +393,7 @@ Pbindef(
 	\decay, Pwhite(0.08, 0.2, inf),
 	\fx, ~fxBus,
 	\dry, Pwrand([1, 0], [0.72, 0.28], inf),
-	\send, Pwhite(0.2, 0.9, inf),
+	\send, 0, //Pwhite(0.2, 0.9, inf),
 	\amp, Pseq([0.52, 0.22, 0.34, 0.18, 0.46, 0.24, 0.58, 0.2], inf) * Pwhite(0.72, 1.0, inf),
 	\dur, 0.25,
 ).play.(t, quant:4);
@@ -409,10 +409,11 @@ Pbindef(
 	\freq, Pseq([120, 145, 120, 173, 120, 157, 110, 165], inf),
 	\fx, ~fxBus,
 	\dry, Pwrand([1, 0], [0.76, 0.24], inf),
-	\send, Pwhite(0.2, 0.75, inf),
-	\amp, Pseq([0.3, 0.2, 0.62, 0.24, 0.34, 0.2, 0.52, 0.2], inf) * Pwhite(0.8, 1.0, inf),
+	\send, 0, // Pwhite(0.2, 0.75, inf),
+	\amp, Pseq([0.3, 0.2, 0.62, 0.24, 0.34, 0.2, 0.52, 0.2], inf) * Pwhite(0.5, 0.75, inf),
 	\dur, 0.25,
 ).play.(t, quant:4);
+)
 
 // A short minor-mode motif punctuates the drums like a dark techno hook.
 Pbindef(
@@ -445,9 +446,9 @@ Pbindef(
 	\root, 0,
 	\fx, ~fxBus,
 	\dry, Pwrand([1, 0], [0.7, 0.3], inf),
-	\send, Pwhite(0.2, 0.85, inf),
+	\send, 0, // Pwhite(0.2, 0.85, inf),
 	\decay, Pwhite(0.42, 0.62, inf),
-	\amp, Pwhite(0.32, 0.72, inf),
+	\amp, Pwhite(0.32, 0.52, inf),
 	\dur, 0.25,
 ).play.(t, quant:4);
 )
@@ -456,12 +457,20 @@ Pbindef(
 // Evaluate to stop and clear the active patterns. The FX Ndef can be stopped
 // separately with Ndef(\comb).stop.
 (
-Pbindef(\bd).clear;
-Pbindef(\sn).clear;
-Pbindef(\ohh).clear;
-Pbindef(\mt).clear;
-Pbindef(\cb).clear;
-Pbindef(\rs).clear;
+Pbindef(\bd).stop;
+Pbindef(\sn).stop;
+Pbindef(\ohh).stop;
+Pbindef(\mt).stop;
+Pbindef(\cb).stop;
+Pbindef(\rs).stop;
+)
+(
+Pbindef(\bd).play;
+Pbindef(\sn).play;
+Pbindef(\ohh).play;
+Pbindef(\mt).play;
+Pbindef(\cb).play;
+Pbindef(\rs).play;
 )
 
 // Open the Ndef control panel to adjust the comb filter while the patterns play.
